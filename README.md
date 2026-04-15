@@ -9,6 +9,8 @@ A minimal VST3 loudness meter.
 
 Short-term LUFS (ITU-R BS.1770-4, 3-second sliding window) on a single needle. Dark and light themes. Spring-damped needle physics.
 
+Part of a series of small, minimal VST3 plugins: see also [skoomaTuner](https://github.com/skoomabwoy/SkoomaTuner) (tuner).
+
 ## Install
 
 Download the VST3 for your platform from the [Releases](https://github.com/skoomabwoy/SkoomaLoud/releases) page.
