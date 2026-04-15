@@ -1,0 +1,146 @@
+name: Build VST3
+
+on:
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: 'Platforms to build'
+        type: choice
+        options:
+          - all
+          - linux
+          - windows
+          - macos
+        default: 'all'
+
+permissions:
+  contents: write
+
+jobs:
+  matrix-setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - id: set
+        run: |
+          if [ "${{ inputs.platforms }}" = "all" ]; then
+            echo 'matrix={"include":[{"os":"ubuntu-latest","name":"Linux","key":"linux"},{"os":"windows-latest","name":"Windows","key":"windows"},{"os":"macos-latest","name":"macOS","key":"macos"}]}' >> "$GITHUB_OUTPUT"
+          elif [ "${{ inputs.platforms }}" = "linux" ]; then
+            echo 'matrix={"include":[{"os":"ubuntu-latest","name":"Linux","key":"linux"}]}' >> "$GITHUB_OUTPUT"
+          elif [ "${{ inputs.platforms }}" = "windows" ]; then
+            echo 'matrix={"include":[{"os":"windows-latest","name":"Windows","key":"windows"}]}' >> "$GITHUB_OUTPUT"
+          elif [ "${{ inputs.platforms }}" = "macos" ]; then
+            echo 'matrix={"include":[{"os":"macos-latest","name":"macOS","key":"macos"}]}' >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: matrix-setup
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.matrix-setup.outputs.matrix) }}
+
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.name }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Cache CMake deps
+        uses: actions/cache@v5
+        with:
+          path: build/_deps
+          key: ${{ matrix.key }}-deps-${{ hashFiles('CMakeLists.txt') }}
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libx11-dev libxrandr-dev libxcursor-dev libxinerama-dev libfreetype-dev libfontconfig1-dev libgl-dev libcurl4-openssl-dev
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Package VST3 (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          cd build/SkoomaLoud_artefacts/Release/VST3
+          zip -r ../../../../skoomaLoud-${{ matrix.name }}.zip skoomaLoud.vst3
+
+      - name: Package VST3 (macOS DMG)
+        if: runner.os == 'macOS'
+        run: |
+          DMG_DIR=dmg_contents
+          mkdir -p "$DMG_DIR"
+          cp -R build/SkoomaLoud_artefacts/Release/VST3/skoomaLoud.vst3 "$DMG_DIR/"
+          cat > "$DMG_DIR/README.txt" << 'README'
+          skoomaLoud — VST3 Loudness Meter Plugin
+
+          INSTALLATION
+          1. Copy skoomaLoud.vst3 to ~/Library/Audio/Plug-Ins/VST3/
+             If the folder doesn't exist yet, run in Terminal:
+             mkdir -p ~/Library/Audio/Plug-Ins/VST3
+          2. Remove the quarantine flag — run in Terminal:
+             xattr -cr ~/Library/Audio/Plug-Ins/VST3/skoomaLoud.vst3
+          3. Restart your DAW. skoomaLoud will appear in your plugin list.
+
+          WHY IS STEP 2 NEEDED?
+          The plugin is not signed with an Apple Developer certificate
+          (we'd rather not pay $99/year for a free plugin). It's safe —
+          the source code is open at github.com/skoomabwoy/skoomaLoud.
+          The xattr command just removes the quarantine flag so macOS
+          lets it load.
+          README
+          hdiutil create -volname skoomaLoud \
+            -srcfolder "$DMG_DIR" \
+            -ov -format UDZO \
+            skoomaLoud-${{ matrix.name }}.dmg
+
+      - name: Package VST3 (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path build/SkoomaLoud_artefacts/Release/VST3/skoomaLoud.vst3 -DestinationPath skoomaLoud-${{ matrix.name }}.zip
+
+      - name: Upload artifact (zip)
+        if: runner.os != 'macOS'
+        uses: actions/upload-artifact@v7
+        with:
+          name: skoomaLoud-${{ matrix.name }}
+          path: skoomaLoud-${{ matrix.name }}.zip
+
+      - name: Upload artifact (dmg)
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v7
+        with:
+          name: skoomaLoud-${{ matrix.name }}
+          path: skoomaLoud-${{ matrix.name }}.dmg
+
+  release:
+    needs: build
+    if: ${{ !failure() && !cancelled() }}
+    runs-on: ubuntu-latest
+    name: Create Release
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(grep -oP 'project\(SkoomaLoud VERSION \K[0-9.]+' CMakeLists.txt)
+          FILES=""
+          for f in artifacts/skoomaLoud-*/skoomaLoud-*.zip artifacts/skoomaLoud-*/skoomaLoud-*.dmg; do
+            [ -f "$f" ] && FILES="$FILES $f"
+          done
+          gh release create "v${VERSION}" \
+            --title "skoomaLoud v${VERSION}" \
+            --notes "VST3 loudness meter plugin. Download for your platform and copy the .vst3 bundle to your VST3 folder. Windows: C:\\Program Files\\Common Files\\VST3. macOS: see README in the .dmg. Linux: ~/.vst3 or /usr/lib/vst3." \
+            $FILES
