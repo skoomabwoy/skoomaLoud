@@ -1,7 +1,5 @@
 # skoomaLoud
 
-A minimal VST3 loudness meter.
-
 <table><tr>
 <td><img src="screenshots/dark-theme.png" width="200"></td>
 <td><img src="screenshots/light-theme.png" width="200"></td>
@@ -9,11 +7,13 @@ A minimal VST3 loudness meter.
 
 Short-term LUFS (ITU-R BS.1770-4, 3-second sliding window) on a single needle. Dark and light themes. Spring-damped needle physics.
 
-Part of a series of small, minimal VST3 plugins: see also [skoomaTuner](https://github.com/skoomabwoy/SkoomaTuner) (tuner).
+Part of a series of small, minimal VST3 plugins:
+- [skoomaTuner](https://github.com/skoomabwoy/SkoomaTuner) (tuner)
+- [skoomaFilter](https://github.com/skoomabwoy/skoomaFilter) (LP filter)
 
 ## Install
 
-Download the VST3 for your platform from the [Releases](https://github.com/skoomabwoy/SkoomaLoud/releases) page.
+Download the VST3 for your platform from the [Releases](https://github.com/skoomabwoy/skoomaLoud/releases) page.
 
 - **Linux**: Extract the `.zip` and copy `skoomaLoud.vst3` to `~/.vst3/` or `/usr/lib/vst3/`.
 - **Windows**: Extract the `.zip` and copy `skoomaLoud.vst3` to `C:\Program Files\Common Files\VST3\`.
@@ -35,7 +35,9 @@ Copy `build/SkoomaLoud_artefacts/Release/VST3/skoomaLoud.vst3/` to your VST3 fol
 
 ## Credits
 
-K-weighting and short-term integration implemented from scratch against the [ITU-R BS.1770-4](https://www.itu.int/rec/R-REC-BS.1770) loudness specification, using biquad design formulas from Robert Bristow-Johnson's [Audio EQ Cookbook](https://www.w3.org/TR/audio-eq-cookbook/). Icons: [Boxicons](https://github.com/box-icons/boxicons-core) (MIT). Font: [JetBrains Mono](https://www.jetbrains.com/lp/mono/) (SIL OFL 1.1).
+- K-weighting and short-term integration implemented from scratch against the [ITU-R BS.1770-4](https://www.itu.int/rec/R-REC-BS.1770) loudness specification, using biquad design formulas from Robert Bristow-Johnson's [Audio EQ Cookbook](https://www.w3.org/TR/audio-eq-cookbook/)
+- Icons: [Boxicons](https://github.com/box-icons/boxicons-core) (MIT)
+- Font: [JetBrains Mono](https://www.jetbrains.com/lp/mono/) (SIL OFL 1.1).
 
 ## License
 
