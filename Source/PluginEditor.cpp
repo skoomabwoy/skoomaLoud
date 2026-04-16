@@ -59,8 +59,8 @@ SkoomaLoudEditor::SkoomaLoudEditor(SkoomaLoudProcessor& p)
     : AudioProcessorEditor(&p), processor(p)
 {
     auto typeface = juce::Typeface::createSystemTypefaceFor(
-        BinaryData::JetBrainsMonoBoldsubset_ttf,
-        BinaryData::JetBrainsMonoBoldsubset_ttfSize);
+        BinaryData::JetBrainsMonoBold_ttf,
+        BinaryData::JetBrainsMonoBold_ttfSize);
     monoFont = juce::Font(juce::FontOptions(typeface));
 
     iconTheme = juce::Drawable::createFromImageData(BinaryData::theme_svg, BinaryData::theme_svgSize);
