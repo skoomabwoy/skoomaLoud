@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "")
-project(SkoomaLoud VERSION 1.0.0)
+project(SkoomaLoud VERSION 1.0.1)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

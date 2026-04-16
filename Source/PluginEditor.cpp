@@ -12,10 +12,10 @@ namespace {
 
 struct Theme {
     juce::Colour background;
-    juce::Colour trackDim, trackBright, accent;
+    juce::Colour trackDim, trackBright;
     juce::Colour meterLow, meterMid, meterHigh, meterOff;
     juce::Colour labelText, valueText;
-    juce::Colour toggleBg, toggleBorder, toggleIcon;
+    juce::Colour toggleIcon;
 };
 
 const Theme darkTheme = {
@@ -23,14 +23,11 @@ const Theme darkTheme = {
     juce::Colour(0xff555555),
     juce::Colour(0xffcccccc),
     juce::Colour(0xff00ff88),
-    juce::Colour(0xff00ff88),
     juce::Colour(0xffffaa00),
     juce::Colour(0xffff4444),
     juce::Colour(0xff444444),
     juce::Colour(0xff888888),
     juce::Colour(0xffaaaaaa),
-    juce::Colour(0xff2a2a3e),
-    juce::Colour(0xff444455),
     juce::Colour(0xff999999),
 };
 
@@ -39,14 +36,11 @@ const Theme lightTheme = {
     juce::Colour(0xffcccccc),
     juce::Colour(0xff555555),
     juce::Colour(0xff00aa55),
-    juce::Colour(0xff00aa55),
     juce::Colour(0xffdd8800),
     juce::Colour(0xffdd2222),
     juce::Colour(0xffcccccc),
     juce::Colour(0xff888888),
     juce::Colour(0xff666666),
-    juce::Colour(0xffe0e0ea),
-    juce::Colour(0xffbbbbcc),
     juce::Colour(0xff777777),
 };
 

@@ -5,7 +5,6 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-#include <cstring>
 #include <limits>
 
 SkoomaLoudProcessor::SkoomaLoudProcessor()
