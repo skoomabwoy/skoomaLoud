@@ -35,7 +35,7 @@ Copy `build/SkoomaLoud_artefacts/Release/VST3/skoomaLoud.vst3/` to your VST3 fol
 
 ## Credits
 
-K-weighting and short-term integration implemented from scratch against the [ITU-R BS.1770-4](https://www.itu.int/rec/R-REC-BS.1770) loudness specification, using biquad design formulas from Robert Bristow-Johnson's [Audio EQ Cookbook](https://www.w3.org/TR/audio-eq-cookbook/). Icons: [Font Awesome Free](https://fontawesome.com/) (SIL OFL 1.1). Font: [JetBrains Mono](https://www.jetbrains.com/lp/mono/) (SIL OFL 1.1).
+K-weighting and short-term integration implemented from scratch against the [ITU-R BS.1770-4](https://www.itu.int/rec/R-REC-BS.1770) loudness specification, using biquad design formulas from Robert Bristow-Johnson's [Audio EQ Cookbook](https://www.w3.org/TR/audio-eq-cookbook/). Icons: [Boxicons](https://github.com/box-icons/boxicons-core) (MIT). Font: [JetBrains Mono](https://www.jetbrains.com/lp/mono/) (SIL OFL 1.1).
 
 ## License
 

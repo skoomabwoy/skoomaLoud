@@ -31,7 +31,7 @@ juce_add_plugin(SkoomaLoud
 juce_add_binary_data(FontData
     SOURCES
         Source/fonts/JetBrainsMono-Bold-subset.ttf
-        Source/fonts/fa-solid-subset.ttf
+        Source/icons/theme.svg
 )
 
 target_sources(SkoomaLoud

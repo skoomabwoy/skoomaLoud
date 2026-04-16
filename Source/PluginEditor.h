@@ -24,7 +24,7 @@ private:
     SkoomaLoudProcessor& processor;
 
     juce::Font monoFont;
-    juce::Font iconFont;
+    std::unique_ptr<juce::Drawable> iconTheme;
     juce::ComponentBoundsConstrainer constrainer;
 
     static constexpr float kMinLufs = -40.0f;

@@ -50,6 +50,15 @@ const Theme lightTheme = {
     juce::Colour(0xff777777),
 };
 
+void drawIcon(juce::Graphics& g, const juce::Drawable* src,
+              juce::Rectangle<float> rect, juce::Colour colour)
+{
+    if (src == nullptr) return;
+    auto d = src->createCopy();
+    d->replaceColour(juce::Colours::black, colour);
+    d->drawWithin(g, rect, juce::RectanglePlacement::centred, 1.0f);
+}
+
 } // anonymous namespace
 
 SkoomaLoudEditor::SkoomaLoudEditor(SkoomaLoudProcessor& p)
@@ -60,10 +69,7 @@ SkoomaLoudEditor::SkoomaLoudEditor(SkoomaLoudProcessor& p)
         BinaryData::JetBrainsMonoBoldsubset_ttfSize);
     monoFont = juce::Font(juce::FontOptions(typeface));
 
-    auto iconTypeface = juce::Typeface::createSystemTypefaceFor(
-        BinaryData::fasolidsubset_ttf,
-        BinaryData::fasolidsubset_ttfSize);
-    iconFont = juce::Font(juce::FontOptions(iconTypeface));
+    iconTheme = juce::Drawable::createFromImageData(BinaryData::theme_svg, BinaryData::theme_svgSize);
 
     constrainer.setFixedAspectRatio(1.0);
     constrainer.setMinimumSize(200, 200);
@@ -190,22 +196,19 @@ void SkoomaLoudEditor::paint(juce::Graphics& g)
     float dotR = 5.0f * scale;
     g.fillEllipse(cx - dotR, cy - dotR, dotR * 2, dotR * 2);
 
-    // --- Toggle: theme (top-right) ---
+    // --- Toggle: theme (top-right, hover-only background) ---
     float iconSize = 33.0f * scale;
     float iconPad  = 8.0f * scale;
-    float themeX = w - iconSize - iconPad;
-    float themeY = iconPad;
+    juce::Rectangle<float> themeRect(w - iconSize - iconPad, iconPad, iconSize, iconSize);
 
-    g.setColour(t.toggleBg);
-    g.fillRoundedRectangle(themeX, themeY, iconSize, iconSize, 3.0f * scale);
-    g.setColour(t.toggleBorder);
-    g.drawRoundedRectangle(themeX, themeY, iconSize, iconSize, 3.0f * scale, 1.0f * scale);
-
-    g.setColour(t.toggleIcon);
-    g.setFont(iconFont.withHeight(iconSize * 0.6f));
-    g.drawText(juce::String::charToString(juce::juce_wchar(0xf042)),
-               juce::Rectangle<float>(themeX, themeY, iconSize, iconSize),
-               juce::Justification::centred, false);
+    if (isMouseOver(false)) {
+        auto mp = getMouseXYRelative().toFloat();
+        if (themeRect.contains(mp)) {
+            g.setColour(t.toggleIcon.withAlpha(0.15f));
+            g.fillRoundedRectangle(themeRect, 3.0f * scale);
+        }
+    }
+    drawIcon(g, iconTheme.get(), themeRect.reduced(iconSize * 0.2f), t.toggleIcon);
 
     // --- Numeric readout (only when signal present) ---
     if (std::isfinite(displayLufs))
