@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.22)
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "")
-project(SkoomaLoud VERSION 1.0.2)
+project(SkoomaLoud VERSION 1.0.3)
+
+# Bridge the shared skooma FetchContent cache (see skoomaTemplate DESIGN.md §3).
+# CMake's FetchContent reads FETCHCONTENT_BASE_DIR as a CMake variable, not an
+# environment variable, so the `export` in ~/.zshenv would be ignored without this.
+if(DEFINED ENV{FETCHCONTENT_BASE_DIR} AND NOT DEFINED FETCHCONTENT_BASE_DIR)
+    set(FETCHCONTENT_BASE_DIR "$ENV{FETCHCONTENT_BASE_DIR}" CACHE PATH "Shared skooma deps cache")
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

@@ -5,10 +5,10 @@
 <td><img src="screenshots/light-theme.png" width="200"></td>
 </tr></table>
 
-Short-term LUFS (ITU-R BS.1770-4, 3-second sliding window) on a single needle. Dark and light themes. Spring-damped needle physics.
+Short-term LUFS and Loudness Range (ITU-R BS.1770-4) on a single needle, color-coded to streaming-platform normalization targets. Dark and light themes. Spring-damped needle physics.
 
 Part of a series of small, minimal VST3 plugins:
-- [skoomaTuner](https://github.com/skoomabwoy/SkoomaTuner) (tuner)
+- [skoomaTuner](https://github.com/skoomabwoy/skoomaTuner) (tuner)
 - [skoomaImage](https://github.com/skoomabwoy/skoomaImage) (stereo image)
 - [skoomaFilter](https://github.com/skoomabwoy/skoomaFilter) (LP filter)
 - [skoomaRoute](https://github.com/skoomabwoy/skoomaRoute) (stereo routing)

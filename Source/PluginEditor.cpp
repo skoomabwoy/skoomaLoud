@@ -98,6 +98,11 @@ void SkoomaLoudEditor::timerCallback()
     needleVelocity += force * dt;
     smoothedLufs   += needleVelocity * dt;
 
+    // LRA settles slowly; light one-pole smoothing keeps the readout steady
+    // without lagging meaningful changes. Meter returns 0 when not enough data.
+    const float lra = processor.currentLra.load(std::memory_order_acquire);
+    displayLra += 0.2f * (lra - displayLra);
+
     repaint();
 }
 
@@ -115,16 +120,19 @@ void SkoomaLoudEditor::paint(juce::Graphics& g)
     float cy = w * 0.48f;
     float radius = w * 0.38f;
 
-    // Loudness color zones (per user: quiet < -14, average -14..-8, hot > -8)
+    // Loudness color zones, anchored to streaming-platform normalization targets
+    // (Spotify/YouTube/Tidal -14 LUFS, Apple -16 LUFS): green is the band where
+    // normalization is essentially free; red means the platform will turn you
+    // down (squashed dynamics for nothing); yellow means quieter than targets.
     juce::Colour valColour;
     if (!std::isfinite(displayLufs))
         valColour = t.meterOff;
-    else if (displayLufs < -14.0f)
-        valColour = t.meterLow;
-    else if (displayLufs < -8.0f)
-        valColour = t.meterMid;
+    else if (displayLufs < -18.0f)
+        valColour = t.meterMid;     // yellow — below streaming targets
+    else if (displayLufs < -12.0f)
+        valColour = t.meterLow;     // green  — in the streaming-friendly band
     else
-        valColour = t.meterHigh;
+        valColour = t.meterHigh;    // red    — above targets, will be turned down
 
     // --- Gauge ---
     float arcStart = juce::MathConstants<float>::pi * 0.75f;
@@ -205,23 +213,37 @@ void SkoomaLoudEditor::paint(juce::Graphics& g)
     drawIcon(g, iconTheme.get(), themeRect.reduced(iconSize * 0.2f), t.toggleIcon);
 
     // --- Numeric readout (only when signal present) ---
+    // Unified text band across Tuner/Loud/Image: main at 0.76w, secondary at 0.89w,
+    // placed below the arc endpoints (y ≈ 0.75w) so the needle sweep can't overlap.
+    const float mainH  = 34.0f * scale;
+    const float mainY  = 0.76f * w;
+    const float labelH = 14.0f * scale;
+    const float labelY = 0.89f * w;
+
     if (std::isfinite(displayLufs))
     {
-        float valH = 34.0f * scale;
-        float valY = cy + 28.0f * scale;
-
         g.setColour(valColour);
-        g.setFont(monoFont.withHeight(valH));
+        g.setFont(monoFont.withHeight(mainH));
         g.drawText(juce::String(displayLufs, 1),
-                   juce::Rectangle<float>(0, valY, w, valH * 1.1f),
+                   juce::Rectangle<float>(0, mainY, w, mainH),
                    juce::Justification::centred, false);
+    }
 
-        float labY = valY + valH * 1.15f;
-        float labH = 14.0f * scale;
-        g.setColour(t.valueText);
-        g.setFont(monoFont.withHeight(labH));
-        g.drawText("LUFS",
-                   juce::Rectangle<float>(0, labY, w, labH * 1.3f),
+    // Loudness Range secondary readout: tells the producer if the mix is
+    // over-compressed (red <4 LU), in the typical rock/jazz/funk band
+    // (green 4–12 LU), or so dynamic it'll feel quiet on streaming
+    // (yellow >12 LU). Hidden until the meter has enough data (returns 0).
+    if (displayLra > 0.05f)
+    {
+        const juce::Colour lraColour =
+            displayLra < 4.0f  ? t.meterHigh :
+            displayLra > 12.0f ? t.meterMid  :
+                                 t.meterLow;
+
+        g.setColour(lraColour);
+        g.setFont(monoFont.withHeight(labelH));
+        g.drawText(juce::String(displayLra, 1) + " LU",
+                   juce::Rectangle<float>(0, labelY, w, labelH),
                    juce::Justification::centred, false);
     }
 }

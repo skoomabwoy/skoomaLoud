@@ -40,10 +40,12 @@ public:
     void setStateInformation(const void* data, int sizeInBytes) override;
 
     std::atomic<float> currentLufs{-std::numeric_limits<float>::infinity()};
+    std::atomic<float> currentLra{0.0f};
     std::atomic<bool>  darkMode{true};
 
 private:
     skloud::ShortTermLoudnessMeter meter;
+    bool wasPlaying{false};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SkoomaLoudProcessor)
 };

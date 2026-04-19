@@ -4,6 +4,7 @@
 */
 
 #include "LoudnessMeter.h"
+#include <algorithm>
 #include <cmath>
 #include <limits>
 
@@ -90,6 +91,8 @@ void ShortTermLoudnessMeter::prepare(double sampleRate, int numChannels)
     filters.assign(static_cast<size_t>(channels), KWeightingFilter{});
     for (auto& f : filters) f.prepare(sampleRate);
 
+    history.reserve(static_cast<size_t>(kHistoryCap));
+
     reset();
 }
 
@@ -101,6 +104,14 @@ void ShortTermLoudnessMeter::reset()
     blockMs.fill(0.0);
     blockIdx     = 0;
     blocksFilled = 0;
+    resetHistory();
+}
+
+void ShortTermLoudnessMeter::resetHistory() noexcept
+{
+    history.clear();
+    historyCount = 0;
+    historyWrite = 0;
 }
 
 void ShortTermLoudnessMeter::process(const float* const* channelData,
@@ -126,6 +137,23 @@ void ShortTermLoudnessMeter::process(const float* const* channelData,
             if (blocksFilled < kWindowBlocks) ++blocksFilled;
             accumSq    = 0.0;
             accumCount = 0;
+
+            // Append the latest short-term loudness to the LRA history. Only
+            // store finite values (the >−70 LUFS gate is in getShortTermLufs).
+            const float st = getShortTermLufs();
+            if (std::isfinite(st))
+            {
+                if (historyCount < kHistoryCap)
+                {
+                    history.push_back(st);   // no realloc — reserved at prepare()
+                    ++historyCount;
+                }
+                else
+                {
+                    history[static_cast<size_t>(historyWrite)] = st;
+                    historyWrite = (historyWrite + 1) % kHistoryCap;
+                }
+            }
         }
     }
 }
@@ -151,6 +179,46 @@ float ShortTermLoudnessMeter::getShortTermLufs() const noexcept
         return -std::numeric_limits<float>::infinity();
 
     return static_cast<float>(lufs);
+}
+
+float ShortTermLoudnessMeter::getLoudnessRange() const noexcept
+{
+    // Need ≈ 3 s of signal before the percentiles mean anything. Below that,
+    // tell the caller "no useful number yet".
+    if (historyCount < 30) return 0.0f;
+
+    // Copy out, apply BS.1770-4 gating, then percentile.
+    std::vector<float> work;
+    work.reserve(static_cast<size_t>(historyCount));
+    for (int i = 0; i < historyCount; ++i)
+    {
+        const float v = history[static_cast<size_t>(i)];
+        if (v >= -70.0f)         // absolute gate
+            work.push_back(v);
+    }
+    if (work.size() < 30) return 0.0f;
+
+    // Relative gate: drop blocks below (ungated mean − 20 LU). Mean is in
+    // the loudness domain (LU/LUFS), per the standard.
+    double sum = 0.0;
+    for (float v : work) sum += v;
+    const float relGate = static_cast<float>(sum / static_cast<double>(work.size())) - 20.0f;
+
+    work.erase(std::remove_if(work.begin(), work.end(),
+                              [relGate](float v) { return v < relGate; }),
+               work.end());
+    if (work.size() < 30) return 0.0f;
+
+    std::sort(work.begin(), work.end());
+    auto pct = [&work](double p) {
+        const double idx = p * static_cast<double>(work.size() - 1);
+        const size_t lo  = static_cast<size_t>(std::floor(idx));
+        const size_t hi  = std::min(lo + 1, work.size() - 1);
+        const double f   = idx - static_cast<double>(lo);
+        return static_cast<float>(work[lo] * (1.0 - f) + work[hi] * f);
+    };
+
+    return pct(0.95) - pct(0.10);
 }
 
 } // namespace skloud

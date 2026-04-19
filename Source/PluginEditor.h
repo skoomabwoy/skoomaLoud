@@ -33,6 +33,7 @@ private:
     float displayLufs    = kMinLufs;       // raw (incl. -inf clamp for display only)
     float smoothedLufs   = kMinLufs;
     float needleVelocity = 0.0f;
+    float displayLra     = 0.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SkoomaLoudEditor)
 };

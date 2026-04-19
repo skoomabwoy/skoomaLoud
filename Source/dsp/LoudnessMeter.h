@@ -39,12 +39,16 @@ private:
 
 // Short-term loudness meter: sums K-weighted squared samples across all
 // channels into 100 ms blocks, holds the last 30 blocks (3 s window),
-// reports loudness in LUFS via getShortTermLufs().
+// reports loudness in LUFS via getShortTermLufs(). Also accumulates a
+// long history of short-term values for Loudness Range (LRA) per BS.1770-4.
 class ShortTermLoudnessMeter
 {
 public:
     void prepare(double sampleRate, int numChannels);
     void reset();
+    // Clear LRA history without disturbing the short-term ring (used on
+    // transport rising-edge so each playthrough gets a fresh range).
+    void resetHistory() noexcept;
 
     // Process one block of interleaved-by-channel-pointer audio.
     // channelData[c] points to numSamples floats for channel c.
@@ -53,9 +57,16 @@ public:
     // Returns short-term loudness in LUFS, or -INFINITY if no data yet.
     float getShortTermLufs() const noexcept;
 
+    // Returns Loudness Range (LRA) in LU per BS.1770-4: P95 − P10 of
+    // short-term values gated by −70 LUFS absolute and −20 LU relative
+    // to the ungated mean. Returns 0.0f when there isn't enough data
+    // (need at least ~3 s of signal) — caller treats that as "hide".
+    float getLoudnessRange() const noexcept;
+
 private:
-    static constexpr int kBlockMs = 100;
-    static constexpr int kWindowBlocks = 30;     // 3 s
+    static constexpr int kBlockMs       = 100;
+    static constexpr int kWindowBlocks  = 30;     // 3 s short-term window
+    static constexpr int kHistoryCap    = 36000;  // 1 hour @ 10 samples/s
 
     double sr{48000.0};
     int channels{2};
@@ -68,6 +79,13 @@ private:
     std::array<double, kWindowBlocks> blockMs{}; // ring of mean-square per block
     int blockIdx{0};
     int blocksFilled{0};
+
+    // LRA history: short-term LUFS sampled once per 100 ms block. Reserved
+    // to kHistoryCap at prepare(); push_back is realtime-safe until full,
+    // then we wrap (ring) so very long sessions reflect the most recent hour.
+    std::vector<float> history;
+    int historyCount{0};
+    int historyWrite{0};
 };
 
 } // namespace skloud

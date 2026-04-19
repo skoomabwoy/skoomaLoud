@@ -28,11 +28,26 @@ void SkoomaLoudProcessor::prepareToPlay(double sampleRate, int /*samplesPerBlock
     const int ch = juce::jmax(1, getTotalNumInputChannels());
     meter.prepare(sampleRate, ch);
     currentLufs.store(-std::numeric_limits<float>::infinity(), std::memory_order_release);
+    currentLra.store(0.0f, std::memory_order_release);
+    wasPlaying = false;
 }
 
 void SkoomaLoudProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
 {
     juce::ScopedNoDenormals noDenormals;
+
+    // Reset the LRA history at transport start (rising edge) so each
+    // playthrough reports the dynamic range of just that take.
+    if (auto* ph = getPlayHead())
+    {
+        if (auto pos = ph->getPosition())
+        {
+            const bool playing = pos->getIsPlaying();
+            if (playing && !wasPlaying)
+                meter.resetHistory();
+            wasPlaying = playing;
+        }
+    }
 
     const int numCh = buffer.getNumChannels();
     const int numSamples = buffer.getNumSamples();
@@ -40,6 +55,7 @@ void SkoomaLoudProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     {
         meter.process(buffer.getArrayOfReadPointers(), numCh, numSamples);
         currentLufs.store(meter.getShortTermLufs(), std::memory_order_release);
+        currentLra.store(meter.getLoudnessRange(), std::memory_order_release);
     }
 }
 
