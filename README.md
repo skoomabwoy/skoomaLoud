@@ -9,6 +9,7 @@ Short-term LUFS (ITU-R BS.1770-4, 3-second sliding window) on a single needle. D
 
 Part of a series of small, minimal VST3 plugins:
 - [skoomaTuner](https://github.com/skoomabwoy/SkoomaTuner) (tuner)
+- [skoomaImage](https://github.com/skoomabwoy/skoomaImage) (stereo image)
 - [skoomaFilter](https://github.com/skoomabwoy/skoomaFilter) (LP filter)
 - [skoomaRoute](https://github.com/skoomabwoy/skoomaRoute) (stereo routing)
 
