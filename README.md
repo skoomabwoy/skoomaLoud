@@ -12,6 +12,7 @@ Part of a series of small, minimal VST3 plugins:
 - [skoomaImage](https://github.com/skoomabwoy/skoomaImage) (stereo image)
 - [skoomaFilter](https://github.com/skoomabwoy/skoomaFilter) (LP filter)
 - [skoomaRoute](https://github.com/skoomabwoy/skoomaRoute) (stereo routing)
+- [skoomaDust](https://github.com/skoomabwoy/skoomaDust) (lo-fi colour)
 
 ## Install
 
